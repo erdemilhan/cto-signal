@@ -143,7 +143,9 @@ cto-signal/
 │
 ├── apps/
 │   ├── web/
-│   └── api/
+│   ├── api/
+│   ├── ingestion/
+│   └── processing/
 │
 ├── packages/
 │   ├── domain/
@@ -182,6 +184,8 @@ cto-signal/
     ├── adr/
     └── specs/
 ```
+
+`apps/*` is uniform: every independently-deployable unit lives there (one npm workspace per Lambda or web app), added only when its iteration needs it — not pre-scaffolded. `packages/*` is reserved for shared libraries that are never deployed on their own.
 
 The harness separates five concerns:
 

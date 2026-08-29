@@ -3,9 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "infrastructure/*"
+  ],
   "scripts": {
-    "start": "tsx src/index.ts",
-    "build": "tsc",
+    "dev:web": "npm run start --workspace=apps/web",
+    "build": "npm run build --workspaces --if-present",
     "lint": "echo \"no linter configured yet\""
   },
   "devDependencies": {
