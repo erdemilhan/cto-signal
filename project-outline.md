@@ -1,12 +1,12 @@
-# CTO Signal: A Complete AI-Assisted SDLC Learning Project
+# CTO Signal: A Complete AI-Assisted Practice Project
 
 ## Project intent
 
-CTO Signal is a deliberately small personal learning project for recreating, end to end, the way a modern AI-assisted software engineering organization should work.
+CTO Signal is a deliberately small personal project for recreating, end to end, the way a modern AI-assisted software engineering organization should work.
 
 The product must remain small and focused. Its value is not the number of features it accumulates; its value is the opportunity to refresh and connect the full engineering lifecycle:
 
-- Git and GitHub workflows
+- Git workflows
 - A local Claude Code development environment
 - Claude harness design using project instructions, rules, skills, agents, and hooks
 - GitHub Actions for CI, deployment, and Claude-assisted pull-request review
@@ -128,7 +128,7 @@ That is enough product for the learning exercise.
                  └────────────────────────────┘
 ```
 
-Keep the first deployed version serverless. This refreshes IAM, Lambda, API Gateway, SQS, DynamoDB, EventBridge, CloudWatch, Secrets Manager, S3, CloudFront, and CDK without creating an infrastructure operations project.
+Keep the first deployed version serverless. This refreshes IAM, Lambda, API Gateway, SQS, DynamoDB, EventBridge, CloudWatch, Secrets Manager, S3, CloudFront, and CloudFormation without creating an infrastructure operations project.
 
 ## The engineering harness is the real project
 
@@ -152,11 +152,11 @@ cto-signal/
 │   └── llm/
 │
 ├── infrastructure/
-│   └── cdk/
-│       ├── app.ts
-│       ├── api-stack.ts
-│       ├── ingestion-stack.ts
-│       └── frontend-stack.ts
+│   └── cloudformation/
+│       ├── api.yaml
+│       ├── ingestion.yaml
+│       ├── frontend.yaml
+│       └── parameters/
 │
 ├── .claude/
 │   ├── settings.json
@@ -182,7 +182,8 @@ cto-signal/
 └── docs/
     ├── architecture.md
     ├── adr/
-    └── specs/
+    ├── specs/
+    └── plans/
 ```
 
 `apps/*` is uniform: every independently-deployable unit lives there (one npm workspace per Lambda or web app), added only when its iteration needs it — not pre-scaffolded. `packages/*` is reserved for shared libraries that are never deployed on their own.
@@ -208,8 +209,8 @@ Instructions are soft governance. Deterministic restrictions and quality gates b
 Use this toolchain:
 
 ```text
-Mac → Git → GitHub → VS Code/Cursor + terminal Claude Code
-    → Node.js/TypeScript → AWS CDK
+Mac → Git → GitHub → VS Code + terminal Claude Code
+    → Node.js/TypeScript → AWS CloudFormation
 ```
 
 Use Claude Code from the terminal deliberately. The point is to understand the harness, not only to experience inline AI assistance through an IDE.
@@ -217,7 +218,7 @@ Use Claude Code from the terminal deliberately. The point is to understand the h
 Initialize the repository, start Claude Code, and generate an initial project guide:
 
 ```bash
-claude
+claude-personal
 /init
 ```
 
@@ -236,7 +237,7 @@ Then edit `CLAUDE.md` yourself and keep it short:
 - React frontend
 - Node.js Lambda backend
 - API Gateway and DynamoDB
-- AWS CDK for all infrastructure
+- AWS CloudFormation for all infrastructure
 
 ## Engineering principles
 
@@ -246,7 +247,7 @@ Then edit `CLAUDE.md` yourself and keep it short:
 - Do not call provider SDKs from domain code.
 - Add unit tests for business logic.
 - Never commit secrets.
-- Make infrastructure changes only through CDK.
+- Make infrastructure changes only through AWS CloudFormation.
 
 ## Definition of Done
 
@@ -308,6 +309,47 @@ This creates the repeatable flow:
 SPEC → PLAN → IMPLEMENT → TEST → REVIEW → PR
 ```
 
+### Specs versus plans
+
+The spec is mostly functional, but not purely: it states **what** must be true and **which constraints apply** (problem, acceptance criteria, non-functional requirements, architectural boundaries, out of scope). It does not prescribe files, classes, or signatures. There is no separate hand-written "implementation spec" — the agent derives the implementation plan from the spec plus the repository, and the human reviews that plan before any code changes.
+
+| Artifact | Author | Lifespan | Content |
+|---|---|---|---|
+| `docs/specs/NNN-*.md` | Human | Durable | What, why, acceptance criteria, constraints |
+| `docs/plans/NNN-*.plan.md` | Agent, human-approved | Snapshot | Approach, files to change, test plan, risks |
+| `docs/adr/NNN-*.md` | Human (agent may draft) | Durable | Cross-cutting architectural decisions |
+| `.claude/rules/*`, `CLAUDE.md` | Human | Durable | Conventions that apply to every feature |
+
+Rule of thumb: if it would still be true after a refactor, it belongs in the spec or an ADR; if not, it belongs in the plan.
+
+### Storing implementation plans (early iterations)
+
+In the early iterations, approved plans are committed to `docs/plans/`, named after their spec:
+
+```text
+docs/specs/002-rss-ingestion.md
+docs/plans/002-rss-ingestion.plan.md
+```
+
+The purpose is learning, not documentation. Comparing the approved plan with the merged diff shows where the agent drifts, what it consistently misses, and which guidance belongs in `.claude/rules/`. It also gives PR reviewers a plan to check the diff against.
+
+Plans are **dated snapshots and are not maintained after merge** — the code and the spec remain the source of truth:
+
+```markdown
+> Snapshot plan for spec 002, approved YYYY-MM-DD.
+> Not maintained after merge. Code and spec are the source of truth.
+
+## Approach
+## Files to change
+## Test plan
+## Risks / open questions
+## Post-implementation notes   ← filled at PR time: deviations from the plan and why
+```
+
+The post-implementation notes are the most valuable part: they record the gap between plan and reality.
+
+Once plans rarely surprise you, stop committing them (or keep them only in PR descriptions). By then their lessons should have migrated into rules, skills, and ADRs. Decisions surfaced in a plan that outlive the feature are promoted to an ADR.
+
 ## 3. Turn the repeated workflow into a Claude skill
 
 Create a reusable workflow:
@@ -327,12 +369,13 @@ description: Use when implementing a feature from a docs/specs/*.md file. Reads 
 1. Read the specification.
 2. Inspect the affected architecture and tests.
 3. Identify unclear requirements and risks.
-4. Produce an implementation plan.
+4. Write the implementation plan to docs/plans/NNN-<name>.plan.md and wait for approval.
 5. Implement the smallest viable change.
 6. Add or update tests.
 7. Run tests, lint, and type checking.
 8. Review the resulting diff.
-9. Summarize changes, decisions, and residual risks.
+9. Fill in the plan's "Post-implementation notes" with deviations and why.
+10. Summarize changes, decisions, and residual risks.
 ```
 
 The frontmatter isn't decoration — `description` is what Claude reads to decide whether this skill applies to the current request, so it drives auto-invocation. The skill is also always callable explicitly as `/implement-feature`.
@@ -376,7 +419,7 @@ Claude changes infrastructure/
               ↓
              hook
               ↓
-          cdk synth
+   cfn-lint + validate-template
 ```
 
 Hooks live in `.claude/settings.json` (the same file that holds tool permissions from step 1), keyed by event with a tool matcher:
@@ -562,31 +605,36 @@ Avoid Kubernetes and avoid ECS initially. They would add operational surface are
 
 Design the processing Lambda for idempotency. Give failed items a bounded retry policy and a dead-letter queue. Record enough context to replay or diagnose a failed message.
 
-## 9. Define all AWS infrastructure with CDK
+## 9. Define all AWS infrastructure with CloudFormation
 
 Adopt one absolute rule:
 
 > Nothing is created manually except the minimum identity and security bootstrap.
 
-Keep infrastructure in TypeScript:
+Keep infrastructure as declarative CloudFormation templates in YAML, one stack per workload:
 
 ```text
-infrastructure/cdk/
-├── app.ts
-├── api-stack.ts
-├── ingestion-stack.ts
-└── frontend-stack.ts
+infrastructure/cloudformation/
+├── api.yaml
+├── ingestion.yaml
+├── frontend.yaml
+└── parameters/
+    └── dev.json
 ```
 
 Use this progression locally and later in CI:
 
 ```bash
-cdk synth
-cdk diff
-cdk deploy
+cfn-lint infrastructure/cloudformation/*.yaml
+aws cloudformation package --template-file ingestion.yaml \
+  --s3-bucket <artifact-bucket> --output-template-file packaged.yaml
+aws cloudformation deploy --template-file packaged.yaml \
+  --stack-name cto-signal-ingestion --no-execute-changeset
+aws cloudformation execute-change-set --stack-name cto-signal-ingestion \
+  --change-set-name <name>
 ```
 
-Make the generated infrastructure change visible in pull requests. Apply least-privilege IAM per workload rather than using one broad application role.
+`package` uploads Lambda bundles to S3 and rewrites code locations; a change set is the CloudFormation equivalent of a diff — review it before executing. Make the template change and its change set visible in pull requests. Apply least-privilege IAM per workload rather than using one broad application role.
 
 ## 10. Deploy from GitHub to AWS using OIDC
 
@@ -603,7 +651,7 @@ GitHub Action
 IAM deployment role
       │
       ▼
-   CDK deploy
+CloudFormation deploy
 ```
 
 Restrict the role's trust relationship to the intended GitHub repository, branch, and environment. Separate deployment roles by environment when the project grows.
@@ -612,7 +660,7 @@ The delivery flow is now:
 
 ```text
 Issue → Spec → Branch → Implementation → Tests → PR
-      → AI review → Merge → OIDC → CDK deploy → AWS
+      → AI review → Merge → OIDC → CloudFormation deploy → AWS
 ```
 
 ## 11. Introduce LLM access behind an application abstraction
@@ -777,7 +825,7 @@ Resist adding product features quickly. Each iteration should introduce one mean
 | 5 | AI summary | Provider API and structured outputs |
 | 6 | Multi-model gateway | LiteLLM and provider abstraction |
 | 7 | Usage dashboard | LLM observability and FinOps |
-| 8 | CDK deployment | Infrastructure as code |
+| 8 | CloudFormation deployment | Infrastructure as code |
 | 9 | Automated deployment | GitHub Actions and AWS OIDC |
 | 10 | Claude PR reviewer | Agentic CI |
 | 11 | Project skills and hooks | Reusable AI engineering harness |
@@ -870,7 +918,7 @@ Issue → Spec → Branch → Claude Code → local hooks → GitHub PR
                                              GitHub OIDC
                                                    │
                                                    ▼
-                                               CDK deploy
+                                         CloudFormation deploy
                                                    │
                                                    ▼
                                                   AWS
