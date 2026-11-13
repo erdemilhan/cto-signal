@@ -5,15 +5,6 @@ A small app that turns a few engineering, AI, and cloud feeds into a five-minute
 > **The app is intentionally small; the engineering system around it is intentionally complete.**
 > The full intent, architecture, and learning path are in [`project-outline.md`](project-outline.md).
 
-## Status
-
-| Iteration | Capability | State |
-|---|---|---|
-| 0 | Hello world, monorepo, TypeScript | Done |
-| 1 | Article normalization and identity ([spec 001](docs/specs/001-article-normalization.md)) | Done |
-| 2 | RSS ingestion (Hacker News, AWS What's New) | Next |
-
-Later iterations add storage, scheduled ingestion, LLM summaries, a LiteLLM gateway, CloudFormation deploys, and evals. See [Suggested build iterations](project-outline.md#suggested-build-iterations).
 
 ## Getting started
 
@@ -80,4 +71,3 @@ Conventions live in [`CLAUDE.md`](CLAUDE.md) and [`.claude/rules/`](.claude/rule
 - TypeScript throughout, in an npm workspaces monorepo.
 - External systems (feeds, LLM providers, AWS) are reached only through adapters, and all LLM access goes through `packages/llm`.
 - Infrastructure is defined only in AWS CloudFormation. GitHub deploys to AWS via OIDC, with no long-lived keys.
-- No secrets in git.
