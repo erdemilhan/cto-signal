@@ -15,10 +15,14 @@ Read `docs/plans/NNN-*.plan.md`. Proceed only if its header says `Status: Approv
 
 1. **Branch.** If on `main`, create `feature/NNN-<slug>`. Never commit to `main`.
 2. **Read** the spec and the approved plan. The plan is the contract; the spec wins if they disagree.
-3. **Implement** the smallest change that satisfies the plan. Follow `CLAUDE.md` and `.claude/rules/*`. If you must deviate from the plan (a file, an approach, a dependency), keep going only if the deviation is minor and note it; if it changes the design, stop and ask.
-4. **Test.** Write the tests listed in the plan's acceptance-criteria table. Test real behavior; mock only true external boundaries.
+3. **Tests first.** Invoke the `test-author` agent with the spec and plan paths. It writes the acceptance tests and fixtures without seeing any implementation.
+   - If it reports SPEC GAPS that change behavior, stop and ask the user before writing code.
+   - Commit its output on the feature branch as `test: acceptance tests for spec NNN`. Committing it separately makes any later change to those tests visible in the diff.
+4. **Implement** the smallest change that makes those tests pass and satisfies the plan. Follow `CLAUDE.md` and `.claude/rules/*`. If you must deviate from the plan (a file, an approach, a dependency), keep going only if the deviation is minor and note it; if it changes the design, stop and ask.
+   - Don't change the test-author's assertions to fit your code. If one is genuinely wrong (it contradicts the spec), fix it and record why in the post-implementation notes.
+   - Add unit tests for internal helpers as needed.
 5. **Verify.** Run `npm run check` (lint → typecheck → test). Fix until it passes. Never weaken or delete an assertion to make it pass.
-6. **Review.** Invoke the `reviewer` agent with: the spec path, the plan path, and the base branch (`main`). Then:
+6. **Review.** Invoke the `reviewer` agent with the spec path, the plan path, the base branch (`main`), and the SHA of the `test: acceptance tests` commit. Then:
    - Fix every `blocker` and `major` finding, re-run `npm run check`, and re-run the reviewer once.
    - If a finding is wrong, don't fix it — record why in the post-implementation notes.
    - Stop after two review rounds; report anything unresolved instead of looping.

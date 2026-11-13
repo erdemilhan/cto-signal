@@ -28,7 +28,7 @@ Spec → plan → implement → review, one skill per step:
 
 1. `/write-spec`: draft `docs/specs/NNN-*.md`; the human sets `Status: Ready`.
 2. `/plan-feature NNN`: write `docs/plans/NNN-*.plan.md`; the human sets `Status: Approved YYYY-MM-DD`.
-3. `/implement-feature NNN`: branch, implement, test, run the `reviewer` agent, record deviations.
+3. `/implement-feature NNN`: branch, have the `test-author` agent write acceptance tests first, implement, run the `reviewer` agent, record deviations.
 
 Never write feature code without an approved plan. Never commit to `main`.
 

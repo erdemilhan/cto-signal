@@ -7,7 +7,7 @@ Human-owned, durable descriptions of **what** a feature must do and **which cons
 ```text
 /write-spec  →  human edits, sets Status: Ready
 /plan-feature NNN  →  docs/plans/NNN-*.plan.md, human edits, sets Status: Approved YYYY-MM-DD
-/implement-feature NNN  →  branch, code, tests, npm run check, reviewer agent, post-implementation notes
+/implement-feature NNN  →  branch, test-author writes tests, code, npm run check, reviewer agent, post-implementation notes
 →  commit + PR  →  CI + Claude PR review  →  human merge
 ```
 

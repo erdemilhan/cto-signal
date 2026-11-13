@@ -16,11 +16,12 @@ Use Bash only for read-only commands: `git diff`, `git log`, `git status`, `git 
 
 1. **Spec coverage**: every acceptance criterion and NFR is implemented *and* proven by a test that would fail if the behavior broke. Name any criterion without one.
 2. **Plan conformance**: unexplained deviations from the approved plan (files, approach, new dependencies).
-3. **Correctness**: bugs, unhandled edge cases, error handling, non-determinism.
-4. **Boundaries**: domain code free of AWS/provider SDKs and I/O; external systems only behind adapters; workspace layout per architecture rules.
-5. **Security**: secrets, injection, unsafe input handling.
-6. **Tests**: weak assertions, over-mocking of internal collaborators, missing negative cases.
-7. **Unnecessary complexity**: abstractions or dependencies the spec doesn't need.
+3. **Test integrity**: if the caller gave you a test-author commit SHA, run `git diff <sha> -- '*.test.ts'` plus the fixtures. Any assertion weakened, deleted, or rewritten after that commit without a reason in the post-implementation notes is a `blocker`.
+4. **Correctness**: bugs, unhandled edge cases, error handling, non-determinism.
+5. **Boundaries**: domain code free of AWS/provider SDKs and I/O; external systems only behind adapters; workspace layout per architecture rules.
+6. **Security**: secrets, injection, unsafe input handling.
+7. **Tests**: weak assertions, over-mocking of internal collaborators, missing negative cases.
+8. **Unnecessary complexity**: abstractions or dependencies the spec doesn't need.
 
 ## Output contract
 
