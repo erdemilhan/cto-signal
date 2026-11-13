@@ -22,6 +22,8 @@ Spec: docs/specs/NNN-<slug>.md
 
 ## Approach
 
+## Public interface
+
 ## Files to change
 
 ## Acceptance criteria → tests
