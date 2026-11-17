@@ -852,6 +852,29 @@ Iteration 13    Evidence-based prompt and model evolution
 
 Do not wait until the application is “finished” to add CI, documentation, or deployment. Those are the product of this learning project.
 
+## Spec roadmap
+
+The iterations above describe *what you learn*. This roadmap breaks the product into specs, roughly **one spec per working day**, each run through `/write-spec` → `/plan-feature` → `/implement-feature` in a fresh session. Spec numbers don't match iteration numbers: the harness iterations (10–12) are already mostly in place, and AWS delivery comes earlier because every AWS resource must exist in CloudFormation before anything uses it.
+
+Each line is a scope hint for `/write-spec`, not the spec itself. Re-check it against what earlier specs actually delivered before writing the next one.
+
+| Spec | Scope (one line) | Iterations | Status |
+|---|---|---|---|
+| 001 | Normalize raw feed items into a canonical `Article` with a URL-derived id, cleaned text, and per-item rejections; pure domain logic. | 1 | Done |
+| 002 | RSS ingestion: an RSS adapter fetches HN and AWS What's New (10 s timeout, bounded retries, one failing feed doesn't stop the others) and maps items to `RawArticle` for normalization; runs locally from `apps/ingestion`. | 2 | Next |
+| 003 | Article storage: a DynamoDB table in CloudFormation plus a repository adapter that writes articles idempotently (conditional put on id), recording `ingestedAt`. | 3, 8 | |
+| 004 | Deploy pipeline: GitHub Actions assumes an AWS role via OIDC and deploys the CloudFormation stacks to a dev environment on merge to `main`, showing change sets on PRs. | 8, 9 | |
+| 005 | Scheduled ingestion: EventBridge → ingestion Lambda → SQS → processing Lambda → DynamoDB, with a DLQ, bounded retries, and enough context to replay a failed message. | 4 | |
+| 006 | Brief API: API Gateway + Lambda returning recent articles (by `ingestedAt`), filterable by source. | — | |
+| 007 | Web brief: a React page on S3 + CloudFront that shows the brief from the API. | 1 | |
+| 008 | AI assessment: `packages/llm` with one provider returns a structured assessment (relevance, categories, why it matters, summary, action), validated at the boundary and stored with the article. | 5 | |
+| 009 | LLM gateway: route `packages/llm` through LiteLLM with task-based model routing (cheap for ranking, stronger for synthesis); the hosting choice is part of the spec. | 6, 13 | |
+| 010 | LLM usage tracking: record request id, task, model, tokens, latency, cost, and outcome per call, and show a monthly usage view. | 7 | |
+| 011 | Daily brief: rank assessed articles into the five-minute "CTO Signal" brief with critical signals first and category filters. | — | |
+| 012 | Evals: a versioned evaluation set run when prompts, models, or routing change, reporting schema validity, ranking quality, latency, and cost. | 13 | |
+
+Harness improvements (hooks, the architect reviewer, workflow tweaks) are not specs. They are tracked as GitHub issues prefixed `harness:` / `repo:` and picked up when a spec triggers them; for example, the architect reviewer arrives with spec 003.
+
 ---
 
 # Target architecture
