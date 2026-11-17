@@ -10,7 +10,7 @@ Spec: docs/specs/002-rss-ingestion.md
 Two new workspaces, following `.claude/rules/architecture.md`:
 
 - **`packages/feeds`** (`@cto-signal/feeds`): the RSS adapter, a shared library. `parseRssItems` turns an RSS document into `RawArticle[]`. `fetchFeed` fetches one feed with the timeout and retry policy, then parses it. It never throws; every outcome comes back as a result value. It knows nothing about normalization or files.
-- **`apps/ingestion`**: the runnable unit. It holds the fixed feed list, plus `runIngestion`, which fetches all feeds, normalizes each feed's items with `normalizeArticles` from `@cto-signal/domain` (unchanged), writes the JSON file and returns a report. A thin `main.ts` wires real `fetch` and the output folder, then prints the report. It's started with `npm run ingest`.
+- **`apps/ingestion`**: the runnable unit. It holds the fixed feed list with each feed's item limit, plus `runIngestion`, which fetches all feeds, normalizes each feed's items with `normalizeArticles` from `@cto-signal/domain` (unchanged), writes the JSON file and returns a report. A thin `main.ts` wires real `fetch` and the output folder, then prints the report. It's started with `npm run ingest`.
 
 `packages/domain` is untouched and stays free of I/O.
 
@@ -32,19 +32,22 @@ Each item maps to `{ sourceId, title, link, publishedAt: pubDate, summary: descr
 **Running** (`runIngestion`):
 1. Records `startedAt` from the injected clock.
 2. Fetches every feed concurrently (`Promise.all` over `fetchFeed`, which never rejects, so one feed can't stop another).
-3. Normalizes each successful feed's items separately, so per-feed counts are exact.
-4. Merges the accepted articles across feeds in feed-list order, keeping the first article per id.
-5. Writes them as a JSON array (pretty-printed) to `<outputDir>/<startedAt>.json`. The ISO time has `:` and `.` replaced by `-`, e.g. `2026-11-17T16-03-01-123Z.json`, because colons are awkward in file names. It creates `outputDir` if missing, and writes the file even when every feed failed (an empty array), so each run leaves a record.
-6. Returns a `RunReport`.
+3. Keeps the first `maxItems` of each successful feed's items, in feed order, and counts the rest as dropped. The limit lives in `apps/ingestion` rather than the adapter, because it is an ingestion policy (bounding storage and later LLM work), not part of reading RSS.
+4. Normalizes each feed's kept items separately, so per-feed counts are exact.
+5. Merges the accepted articles across feeds in feed-list order, keeping the first article per id.
+6. Writes them as a JSON array (pretty-printed) to `<outputDir>/<startedAt>.json`. The ISO time has `:` and `.` replaced by `-`, e.g. `2026-11-17T16-03-01-123Z.json`, because colons are awkward in file names. It creates `outputDir` if missing, and writes the file even when every feed failed (an empty array), so each run leaves a record.
+7. Returns a `RunReport`.
 
 `main.ts` prints `formatReport(report)`. It exits 1 only when every feed failed, otherwise 0. The spec doesn't cover exit codes; this is a convenience for later scheduling, not a criterion.
 
-**Feed list** (fixed in code, in `apps/ingestion`):
+**Feed list** (fixed in code, in `apps/ingestion/src/feeds.ts`, which is also where the limit is configured):
 
-| Source id | URL | ignoreDescription |
-|---|---|---|
-| `hacker-news` | `https://news.ycombinator.com/rss` | yes |
-| `aws-whats-new` | `https://aws.amazon.com/about-aws/whats-new/recent/feed/` | no |
+| Source id | URL | ignoreDescription | maxItems |
+|---|---|---|---|
+| `hacker-news` | `https://news.ycombinator.com/rss` | yes | `DEFAULT_MAX_ITEMS` (50) |
+| `aws-whats-new` | `https://aws.amazon.com/about-aws/whats-new/recent/feed/` | no | `DEFAULT_MAX_ITEMS` (50) |
+
+Today HN serves 30 items (none dropped) and AWS 100 (50 dropped).
 
 **Source shapes checked (2026-11-17)**:
 - HN: RSS 2.0, 30 items. Each has `title` (with entities such as `&#x27;`), `link`, `pubDate`, `comments`, and a `description` that is a CDATA `Comments` link.
@@ -99,13 +102,20 @@ export function fetchFeed(
 import type { FeedSource, FeedFailure } from "@cto-signal/feeds";
 import type { RejectionReason } from "@cto-signal/domain";
 
-export const FEEDS: readonly FeedSource[]; // the table above, in that order
+export const DEFAULT_MAX_ITEMS: 50;
+
+export type IngestionFeed = FeedSource & {
+  maxItems: number; // keep at most this many items, in feed order
+};
+
+export const FEEDS: readonly IngestionFeed[]; // the table above, in that order
 
 export type FeedReport =
   | {
       sourceId: string;
       status: "ok";
-      itemsRead: number;
+      itemsRead: number;     // items in the feed
+      itemsDropped: number;  // items beyond maxItems, not normalized
       accepted: number;   // after normalization, before cross-feed dedupe
       rejected: { title?: string; link?: string; reason: RejectionReason }[];
     }
@@ -122,7 +132,7 @@ export function runIngestion(deps: {
   fetch: typeof globalThis.fetch;
   outputDir: string;
   now?: () => Date;               // default: () => new Date()
-  feeds?: readonly FeedSource[];  // default: FEEDS
+  feeds?: readonly IngestionFeed[];  // default: FEEDS
 }): Promise<RunReport>;
 
 export function formatReport(report: RunReport): string;
@@ -143,7 +153,7 @@ Test seams: the injected `fetch` (a stub that routes by URL); fake timers for th
 | `packages/feeds/src/fetch-feed.test.ts` | Timeout, retry and failure classification, with a stub `fetch` and fake timers. |
 | `apps/ingestion/package.json` | New workspace `ingestion`: `start: tsx src/main.ts`, `typecheck`. Dependencies: `@cto-signal/domain`, `@cto-signal/feeds` (`"*"`). |
 | `apps/ingestion/tsconfig.json` | Same shape as `packages/feeds`. |
-| `apps/ingestion/src/feeds.ts` | `FEEDS`. |
+| `apps/ingestion/src/feeds.ts` | `IngestionFeed`, `DEFAULT_MAX_ITEMS`, `FEEDS`. |
 | `apps/ingestion/src/run-ingestion.ts` | `runIngestion`, `formatReport`, `FeedReport`, `RunReport`. |
 | `apps/ingestion/src/main.ts` | CLI entry. Output folder is `apps/ingestion/output/`, resolved from `import.meta.url`. Prints the report and sets the exit code. |
 | `apps/ingestion/src/run-ingestion.test.ts` | End-to-end run tests with fixtures, a stub `fetch` and a temp output folder. |
@@ -165,12 +175,13 @@ Scenario tests are named with the scenario name verbatim; outlines use `it.each`
 | A run fetches both configured feeds | `apps/ingestion/src/run-ingestion.test.ts` › "A run fetches both configured feeds" (default `FEEDS`; asserts both URLs requested and each article's `sourceId` matches its feed) |
 | Feed items become normalized articles | `run-ingestion.test.ts` › "Feed items become normalized articles" (HN fixture: title `We don't need more apps…`, canonical URL, id, date text; AWS fixture: HTML-free summary; output objects have only `Article` fields) |
 | Hacker News articles have no summary | `run-ingestion.test.ts` › "Hacker News articles have no summary" |
+| Each feed is capped at its item limit | `run-ingestion.test.ts` › "Each feed is capped at its item limit" (generated 100-item feed with `maxItems: 50`; the first 50 links are written, the last 50 aren't; report has `itemsRead: 100`, `itemsDropped: 50`) |
 | A fetch attempt times out after 10 seconds | `packages/feeds/src/fetch-feed.test.ts` › "A fetch attempt times out after 10 seconds" (stub never resolves; signal not aborted at 9,999 ms, aborted at 10,000 ms) |
 | Transient failures are retried at most twice | `fetch-feed.test.ts` › `it.each` "Transient failures are retried at most twice (network error / timeout / HTTP 429 / HTTP 503)" (3 calls, delays of 1 s then 2 s, `ok: false` with the matching `kind`) |
 | Non-transient failures are not retried | `fetch-feed.test.ts` › `it.each` "Non-transient failures are not retried (HTTP 404 / a body that is not XML / XML that is not RSS)" (1 call, `ok: false`) |
 | One failing feed does not stop the others | `run-ingestion.test.ts` › "One failing feed does not stop the others" (HN stub always 503; AWS articles in the file; HN reported failed) |
 | Accepted articles are written to a new JSON file per run | `run-ingestion.test.ts` › "Accepted articles are written to a new JSON file per run" (two runs with different `now`; two files, the first unchanged; cross-feed duplicate written once; `git check-ignore` confirms `apps/ingestion/output/` is ignored) |
-| A run reports each feed's outcome | `run-ingestion.test.ts` › "A run reports each feed's outcome" (fixture with one link-less item → `itemsRead`, `accepted`, `rejected` with `invalid-url`; failed feed carries its `failure`) |
+| A run reports each feed's outcome | `run-ingestion.test.ts` › "A run reports each feed's outcome" (fixture with one link-less item → `itemsRead`, `itemsDropped`, `accepted`, `rejected` with `invalid-url`; failed feed carries its `failure`) |
 | NFR: tests make no real network calls | Enforced by design: `fetch` is a required parameter of `fetchFeed` and `runIngestion`, and every test passes a stub. No separate test. |
 | NFR: a run is bounded in time | `run-ingestion.test.ts` › "a run where every feed always times out finishes within 3 × 10 s plus backoff" (fake timers; resolves after 33 s of fake time, both feeds failed) |
 | NFR: same ids on re-run | `run-ingestion.test.ts` › "re-running against unchanged feeds produces the same article ids" |
@@ -180,6 +191,7 @@ Scenario tests are named with the scenario name verbatim; outlines use `it.each`
 | Edge: missing fields | `parse-rss.test.ts` › "maps missing item elements to undefined" |
 | Edge: HTML page | `parse-rss.test.ts` › "rejects an HTML page as invalid-xml" |
 | Edge: large real feed | `parse-rss.test.ts` › "parses a feed with more than 1,000 entities" (guards the raised limit; generated XML) |
+| Edge: default limit | `run-ingestion.test.ts` › "every configured feed uses the default item limit of 50" |
 | Edge: report formatting | `run-ingestion.test.ts` › "formatReport lists each feed with counts or its failure reason" |
 
 ## Dependencies

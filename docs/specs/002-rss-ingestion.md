@@ -30,6 +30,13 @@ Feature: RSS ingestion
     When a run ingests the feed
     Then the article for that item has no summary
 
+  Scenario: Each feed is capped at its item limit
+    Given a feed whose item limit is 50
+    And the feed contains 100 items
+    When a run ingests the feed
+    Then only the first 50 items, in feed order, are normalized
+    And the remaining 50 items are reported as dropped by the limit
+
   Scenario: A fetch attempt times out after 10 seconds
     Given a feed that never responds
     When a run fetches it
@@ -75,7 +82,7 @@ Feature: RSS ingestion
 
   Scenario: A run reports each feed's outcome
     When a run completes
-    Then for each successful feed it reports items read, articles accepted, and rejected items with their reasons
+    Then for each successful feed it reports items read, items dropped by the limit, articles accepted, and rejected items with their reasons
     And for each failed feed it reports the reason it failed
 ```
 
@@ -92,6 +99,7 @@ Feature: RSS ingestion
 - The runnable entry point is a new `apps/ingestion` workspace, started locally with an npm script. No AWS resources, Lambda handler or CloudFormation in this spec.
 - An XML-parsing dependency is allowed if the plan justifies it. Fetching uses Node's built-in HTTP client.
 - The feed list is fixed in code for this iteration. There is no config file or environment variable for it.
+- Each feed has a configurable item limit, set alongside the feed list in code. It defaults to 50 for both feeds. Changing it means editing that setting, not the ingestion logic.
 
 ## Test data
 
@@ -111,3 +119,4 @@ None. Resolved 2026-11-17:
 - Hacker News descriptions are dropped; HN articles have no summary.
 - Output is a local JSON file, one new file per run, named by run time.
 - Retries: up to 2, on transient failures only.
+- Each feed is capped at a configurable item limit, 50 for now. The cap bounds downstream work (storage, later LLM calls), not the download: RSS always returns the whole document.
