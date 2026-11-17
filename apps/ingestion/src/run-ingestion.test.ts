@@ -127,15 +127,27 @@ function useFakeClock() {
   vi.setSystemTime(new Date("2026-11-17T16:00:00.000Z"));
 }
 
-/** Advances fake time in small steps, yielding to real I/O between steps, until `promise` settles. */
+/**
+ * Advances fake time in small steps, yielding to real I/O between steps, until `promise` settles.
+ * While no fake timers are pending (e.g. the run is waiting on real file I/O), it only yields and
+ * leaves the fake clock alone, so slow disks (CI) don't inflate measured fake time.
+ */
 async function settle<T>(promise: Promise<T>, maxMs = 120_000, stepMs = 50): Promise<T> {
   let done = false;
   promise.then(
     () => (done = true),
     () => (done = true),
   );
-  for (let elapsed = 0; !done && elapsed <= maxMs; elapsed += stepMs) {
-    await vi.advanceTimersByTimeAsync(stepMs);
+  const maxIdleYields = 100_000;
+  let elapsed = 0;
+  let idleYields = 0;
+  while (!done && elapsed <= maxMs && idleYields <= maxIdleYields) {
+    if (vi.getTimerCount() > 0) {
+      await vi.advanceTimersByTimeAsync(stepMs);
+      elapsed += stepMs;
+    } else {
+      idleYields++;
+    }
     await new Promise<void>((resolve) => setImmediate(resolve));
   }
   if (!done) throw new Error(`promise did not settle within ${maxMs} ms of fake time`);

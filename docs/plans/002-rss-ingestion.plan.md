@@ -219,6 +219,8 @@ Implemented 2026-11-17 on `feature/002-rss-ingestion`. `npm run check` passes (1
 
 **Test-author output.** 47 tests. SPEC GAPS were all already resolved by the plan (concurrent fetch, 1 s / 2 s backoff, file-name format, first-feed-wins dedupe), so none changed behavior. After the test commit, one assertion was *strengthened*: `formatReport` checked `toContain("50")`, which "503" also satisfied, so it now checks `"50 dropped by limit"` plus the failure message. Three helper tests were added for the review fixes. No assertion was weakened.
 
+**CI fix after the PR opened.** "a run where every feed always times out finishes within 3 × 10 s plus backoff" failed on GitHub CI (`34140 ≤ 34000`). The test-author's `settle` helper kept advancing fake time by 10 ms per step while the run waited on *real* file I/O (mkdir/writeFile) after the fetches had finished, so a slow CI disk inflated the measured fake time. Reproduced locally by adding artificial I/O delay. Fix: `settle` advances fake time only while fake timers are pending; otherwise it just yields to real I/O. The assertion and its bound are unchanged. *Harness lesson:* fake-time helpers must not advance the clock while the code under test waits on real I/O. Make that a testing.md rule if it happens again.
+
 **Review (1 round, verdict: approve, no blocker/major)**
 | Finding | Resolution |
 |---|---|
