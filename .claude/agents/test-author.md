@@ -21,7 +21,7 @@ Do **not** read or rely on implementation files for the new feature, even if som
 ## What to write
 
 - One or more `*.test.ts` files at the paths the plan lists, plus any fixtures the plan lists.
-- At least one test per acceptance criterion and testable NFR, using the test names from the plan's table where given. Add negative and edge cases the spec implies (empty input, malformed data, one failure among many).
+- At least one test per acceptance criterion and testable NFR. Name each scenario's test with the scenario name verbatim, and a `Scenario Outline` as one `it.each` over its `Examples` rows, per `.claude/rules/testing.md`. Add negative and edge cases the spec implies (empty input, malformed data, one failure among many) under their own descriptive names.
 - Fixtures modelled on real source data when the spec or plan points to it. Don't invent formats.
 - Mock only true external boundaries (network, AWS, LLM providers), per the testing rules. If the plan's interface has no seam for a boundary the tests need to control (e.g. no injectable fetch or clock), report it rather than reaching into internals.
 
@@ -36,7 +36,7 @@ TESTS WRITTEN
 <file> — <n> tests
 
 COVERAGE
-<criterion> → <test name>
+<scenario or NFR> → <file> › <test name>
 
 SPEC GAPS
 <anything ambiguous or untestable you hit while writing the tests, and the assumption you made> | none

@@ -28,7 +28,7 @@ Spec: docs/specs/NNN-<slug>.md
 
 ## Acceptance criteria → tests
 
-| Criterion | Test |
+| Scenario / NFR | Test file › test name |
 |---|---|
 
 ## Dependencies

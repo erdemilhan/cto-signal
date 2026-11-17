@@ -17,9 +17,20 @@ Status lifecycle: `Draft` → `Ready` → `Implemented`.
 
 `NNN-<kebab-slug>.md`, numbered sequentially. Its plan is `docs/plans/NNN-<kebab-slug>.plan.md`.
 
+## Acceptance criteria format
+
+Acceptance criteria are Gherkin scenarios in one fenced `gherkin` block:
+
+- One `Scenario` per observable behavior. Its name is a short sentence and serves as the criterion's handle in the plan's "Acceptance criteria → tests" table.
+- `Given` / `When` / `Then`, with `And` for extra steps. Use concrete example values where they make the behavior clearer.
+- Use a `Scenario Outline` with an `Examples` table when the same behavior varies only by data.
+- Describe behavior a test or person could observe, not internals: no file paths, type names or function names.
+
+The Gherkin is a specification format, not executable: tests are written in Vitest, not Cucumber.
+
 ## Template
 
-```markdown
+````markdown
 # NNN — <Feature name>
 
 Status: Draft
@@ -30,7 +41,14 @@ Why this is needed, in two or three sentences.
 
 ## Acceptance criteria
 
-- One observable, testable behavior per bullet.
+```gherkin
+Feature: <Feature name>
+
+  Scenario: <One observable behavior, named as a short sentence>
+    Given <the starting state or input>
+    When <the action or event>
+    Then <the observable outcome>
+```
 
 ## Non-functional requirements
 
@@ -47,4 +65,4 @@ Why this is needed, in two or three sentences.
 ## Open questions
 
 - Must be empty before Status: Ready.
-```
+````
