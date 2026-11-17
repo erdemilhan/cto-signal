@@ -10,3 +10,6 @@ packaged.yaml
 .claude/settings.local.json
 .vscode/
 
+
+# Local ingestion runs (spec 002)
+apps/ingestion/output/

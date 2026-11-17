@@ -21,17 +21,20 @@ npm run check      # lint → typecheck → unit tests (the same gate CI runs)
 | `npm test` | Runs the Vitest unit tests. |
 | `npm run lint` | Runs ESLint (typescript-eslint). |
 | `npm run typecheck` | Runs `tsc --noEmit` in every workspace. |
+| `npm run ingest` | Fetches the Hacker News and AWS What's New feeds once and writes the normalized articles to `apps/ingestion/output/<run time>.json` (gitignored). |
 | `npm run dev:web` | Runs the `apps/web` placeholder. |
 
 ## Repository layout
 
 ```text
 apps/                 deployable units, one per Lambda or web app (added when an iteration needs one)
+  ingestion/          local RSS ingestion run: feed list, item limits, JSON output
   web/                placeholder web app
 packages/             shared libraries, never deployed on their own
   domain/             pure domain logic, no I/O or SDKs
     src/article.ts      shared Article / RawArticle types
     src/normalization/  canonical URL, id, text cleanup, batch normalization
+  feeds/              RSS adapter: fetch with timeout/retry, parse into RawArticle
 docs/
   specs/              what to build (human-owned)
   plans/              how it was built (agent-written, human-approved snapshots)

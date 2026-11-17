@@ -1,6 +1,6 @@
 # 002 — RSS ingestion
 
-Status: Ready
+Status: Implemented
 
 ## Problem
 
