@@ -8,14 +8,76 @@ Spec 001 gave CTO Signal a canonical article shape, but nothing yet fetches real
 
 ## Acceptance criteria
 
-- A run fetches both configured feeds: Hacker News (`https://news.ycombinator.com/rss`) and AWS What's New (`https://aws.amazon.com/about-aws/whats-new/recent/feed/`). Each feed has a stable source id, and every article from that feed carries it.
-- Each RSS item's title, link, publication date and description are handed to normalization (spec 001), with XML entities and CDATA already decoded (e.g. `We don&#x27;t` becomes `We don't`). No other item fields are kept.
-- Hacker News item descriptions are ignored, so Hacker News articles have no summary. (Each HN description is only a "Comments" link.)
-- Every fetch attempt times out after 10 seconds.
-- A transient failure (network error, timeout, HTTP 429 or 5xx) is retried up to 2 times with a short backoff, so at most 3 attempts per feed. Other HTTP 4xx responses and responses that aren't parseable RSS fail the feed immediately, without retrying.
-- A feed that fails, after any retries, doesn't stop the run: the other feeds are still fetched, normalized and written.
-- A run writes the accepted articles from all successful feeds, deduplicated by id, to a new JSON file in a local output folder, named by the run's start time, so earlier runs' files are kept. The folder is not committed to git.
-- A run reports each feed's outcome: items read, articles accepted, and rejected items with their reasons, or the reason the feed failed.
+```gherkin
+Feature: RSS ingestion
+
+  Scenario: A run fetches both configured feeds
+    Given the Hacker News feed at https://news.ycombinator.com/rss
+    And the AWS What's New feed at https://aws.amazon.com/about-aws/whats-new/recent/feed/
+    When a run starts
+    Then both feeds are fetched
+    And every article carries the stable source id of the feed it came from
+
+  Scenario: Feed items become normalized articles
+    Given a feed item titled "We don&#x27;t need more apps" with a link, a publication date and a description
+    When a run ingests the feed
+    Then the output has an article titled "We don't need more apps"
+    And the article was normalized by the spec 001 rules from the item's title, link, publication date and description
+    And no other item fields are kept
+
+  Scenario: Hacker News articles have no summary
+    Given a Hacker News item whose description is only a "Comments" link
+    When a run ingests the feed
+    Then the article for that item has no summary
+
+  Scenario: A fetch attempt times out after 10 seconds
+    Given a feed that never responds
+    When a run fetches it
+    Then each attempt is abandoned after 10 seconds
+
+  Scenario Outline: Transient failures are retried at most twice
+    Given a feed whose every attempt fails with <failure>
+    When a run fetches it
+    Then the feed is attempted 3 times, with a short backoff between attempts
+    And the feed is reported as failed
+
+    Examples:
+      | failure       |
+      | network error |
+      | timeout       |
+      | HTTP 429      |
+      | HTTP 503      |
+
+  Scenario Outline: Non-transient failures are not retried
+    Given a feed that responds with <response>
+    When a run fetches it
+    Then the feed is attempted once
+    And the feed is reported as failed
+
+    Examples:
+      | response                |
+      | HTTP 404                |
+      | a body that is not XML  |
+      | XML that is not RSS     |
+
+  Scenario: One failing feed does not stop the others
+    Given the Hacker News feed fails after all retries
+    And the AWS What's New feed responds normally
+    When a run completes
+    Then the AWS What's New articles are written
+
+  Scenario: Accepted articles are written to a new JSON file per run
+    Given a previous run's output file exists
+    When a run completes
+    Then the accepted articles from all successful feeds, deduplicated by id, are written to a new JSON file named by the run's start time
+    And the previous run's file is unchanged
+    And the output folder is ignored by git
+
+  Scenario: A run reports each feed's outcome
+    When a run completes
+    Then for each successful feed it reports items read, articles accepted, and rejected items with their reasons
+    And for each failed feed it reports the reason it failed
+```
 
 ## Non-functional requirements
 
