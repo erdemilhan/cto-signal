@@ -1,6 +1,6 @@
 # Plan 002 — RSS ingestion
 
-Status: Draft
+Status: Approved 2026-11-17
 Spec: docs/specs/002-rss-ingestion.md
 
 > Snapshot plan. Not maintained after merge. Code and spec are the source of truth.
