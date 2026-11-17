@@ -194,3 +194,11 @@ describe("parseRssItems", () => {
     expect(caught).toBeInstanceOf(Error);
   });
 });
+
+describe("parseRssItems (empty channel)", () => {
+  it("treats an empty channel element as a feed with no items", () => {
+    const source = { id: "s", url: "https://example.com/rss" };
+    expect(parseRssItems("<rss version=\"2.0\"><channel></channel></rss>", source)).toEqual([]);
+    expect(parseRssItems("<rss version=\"2.0\"><channel/></rss>", source)).toEqual([]);
+  });
+});

@@ -450,11 +450,12 @@ describe("formatReport", () => {
 
     expect(text).toContain("aws-whats-new");
     expect(text).toContain("100");
-    expect(text).toContain("50");
+    expect(text).toContain("50 dropped by limit");
     expect(text).toContain("49");
     expect(text).toContain("invalid-url");
     expect(text).toContain("hacker-news");
     expect(text).toContain("503");
+    expect(text).toContain("HTTP 503 Service Unavailable");
     expect(text).toContain("/tmp/output/2026-11-17T16-03-01-123Z.json");
   });
 });

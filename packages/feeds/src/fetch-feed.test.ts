@@ -262,3 +262,22 @@ describe("fetchFeed", () => {
     expect(result.ok).toBe(false);
   });
 });
+
+describe("fetchFeed (network error details)", () => {
+  it("reports the underlying cause of a network error", async () => {
+    const fetch = (async () => {
+      throw new TypeError("fetch failed", { cause: new Error("getaddrinfo ENOTFOUND example.invalid") });
+    }) as unknown as typeof globalThis.fetch;
+    const promise = fetchFeed({ id: "s", url: "https://example.invalid/rss" }, { fetch });
+    await vi.advanceTimersByTimeAsync(5_000);
+    const result = await promise;
+    expect(result).toMatchObject({ ok: false, failure: { kind: "network", message: "fetch failed: getaddrinfo ENOTFOUND example.invalid" } });
+  });
+
+  it("does not reject when fetch rejects with a non-Error value", async () => {
+    const fetch = (() => Promise.reject(null)) as unknown as typeof globalThis.fetch;
+    const promise = fetchFeed({ id: "s", url: "https://example.com/rss" }, { fetch });
+    await vi.advanceTimersByTimeAsync(5_000);
+    await expect(promise).resolves.toMatchObject({ ok: false, failure: { kind: "network", message: "null" } });
+  });
+});

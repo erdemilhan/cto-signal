@@ -207,3 +207,31 @@ Scenario tests are named with the scenario name verbatim; outlines use `it.each`
 - **Feed etiquette.** No `User-Agent` override and no conditional GET. A local manual run every so often is well within normal use.
 
 ## Post-implementation notes
+
+Implemented 2026-11-17 on `feature/002-rss-ingestion`. `npm run check` passes (108 tests). A real `npm run ingest` run: HN 30 read and 30 accepted; AWS 100 read, 50 dropped by the limit, 50 accepted; 80 articles written.
+
+**Deviations from the plan**
+- The output file is written with `flag: "wx"`, so an existing file is never overwritten. This enforces "the previous run's file is unchanged" even if two runs share a millisecond start time. In that case the second run rejects with `EEXIST` instead of overwriting. That is acceptable for a local, manual run.
+- `fetchFeed` cancels the body of a non-2xx response to release the connection, and reports a network error as `message: cause` (Node's fetch puts the real reason, such as DNS or TLS, in `error.cause`). Both came from the review.
+- `parseRssItems` treats an empty `<channel/>` (which parses to `""`) as an empty feed rather than `not-rss`. This also came from the review.
+- `.claude/rules/architecture.md` also records that apps run TS sources with `tsx`, and that tsconfigs of workspaces that import another workspace omit `rootDir`.
+- Risks that didn't happen: `tsx` resolved the cross-workspace `exports: ./src/index.ts` with no config, and `git check-ignore` in a test works locally. The parser's default `maxExpandedLength` (100k characters) is enough for the live AWS feed, so only `maxTotalExpansions` is raised, as planned.
+
+**Test-author output.** 47 tests. SPEC GAPS were all already resolved by the plan (concurrent fetch, 1 s / 2 s backoff, file-name format, first-feed-wins dedupe), so none changed behavior. After the test commit, one assertion was *strengthened*: `formatReport` checked `toContain("50")`, which "503" also satisfied, so it now checks `"50 dropped by limit"` plus the failure message. Three helper tests were added for the review fixes. No assertion was weakened.
+
+**Review (1 round, verdict: approve, no blocker/major)**
+| Finding | Resolution |
+|---|---|
+| Post-implementation notes empty; `wx` undocumented | These notes; comment in code |
+| `(error as Error).message` throws on a `null` rejection, breaking "never rejects" | Fixed (`describeError`), with a test |
+| Network failure reason hides `error.cause` | Fixed, with a test |
+| Error-response body left unread (socket leak) | Fixed (`response.body?.cancel()`) |
+| In-feed duplicate ids are silently uncounted in the report | Documented on `FeedReport.accepted` (duplicates = read − dropped − rejected − accepted). I didn't add a field, so the plan's public interface stays as it is. |
+| `formatReport` test's `"50"` assertion is too weak | Strengthened |
+| Empty `<channel/>` misclassified as `not-rss` | Fixed, with a test |
+
+**For the harness**
+- *Test-author worked:* it ran in parallel with the implementation draft (kept in a scratchpad until the test commit, so it couldn't see it). All 47 tests but one passed on the first implementation run, and that one was the expected `.gitignore` check.
+- *Candidate rule (testing.md):* in a `toContain` assertion on formatted output, use a whole phrase, not a bare number. Bare numbers collide (`50` in `503`).
+- *Candidate adapter convention:* adapters that "never reject" should turn unknown errors into messages with an `instanceof Error` guard, never `(e as Error)`.
+
