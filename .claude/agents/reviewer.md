@@ -16,7 +16,7 @@ Use Bash only for read-only commands: `git diff`, `git log`, `git status`, `git 
 
 ## Check, in order
 
-1. **Spec coverage**: every acceptance criterion and NFR is implemented *and* proven by a test that would fail if the behavior broke. Name any criterion without one.
+1. **Spec coverage**: every acceptance criterion and NFR is implemented *and* proven by a test that would fail if the behavior broke. Name any criterion without one. Gherkin scenarios are matched to tests by name: `grep` for each scenario name in the test files and flag any scenario with no test of that name.
 2. **Plan conformance**: unexplained deviations from the approved plan (files, approach, new dependencies).
 3. **Test integrity**: if the caller gave you a test-author commit SHA, run `git diff <sha> -- '*.test.ts'` plus the fixtures. Any assertion weakened, deleted, or rewritten after that commit without a reason in the post-implementation notes is a `blocker`.
 4. **Correctness**: bugs, unhandled edge cases, error handling, non-determinism.
