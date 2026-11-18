@@ -4,7 +4,7 @@ Status: Implemented
 
 ## Problem
 
-Spec 001 gave CTO Signal a canonical article shape, but nothing yet fetches real feeds. This spec fetches the two initial RSS sources (Hacker News and AWS What's New), turns their items into normalized articles, and keeps going when one source misbehaves. It runs locally. Storage and scheduling come later, so for this iteration the result is written to a local JSON file.
+Spec 001 gave Tech News Signal a canonical article shape, but nothing yet fetches real feeds. This spec fetches the two initial RSS sources (Hacker News and AWS What's New), turns their items into normalized articles, and keeps going when one source misbehaves. It runs locally. Storage and scheduling come later, so for this iteration the result is written to a local JSON file.
 
 ## Acceptance criteria
 

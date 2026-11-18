@@ -4,7 +4,7 @@ Status: Implemented
 
 ## Problem
 
-The initial sources are RSS 2.0 feeds: Hacker News (`news.ycombinator.com/rss`) and AWS What's New. Their items differ in shape, often with tracking parameters and inconsistent whitespace. Before we fetch or store anything, CTO Signal needs one canonical article shape and a stable identity, so the same story is recognized as the same story. That identity is the basis for idempotent ingestion in later specs.
+The initial sources are RSS 2.0 feeds: Hacker News (`news.ycombinator.com/rss`) and AWS What's New. Their items differ in shape, often with tracking parameters and inconsistent whitespace. Before we fetch or store anything, Tech News Signal needs one canonical article shape and a stable identity, so the same story is recognized as the same story. That identity is the basis for idempotent ingestion in later specs.
 
 ## Acceptance criteria
 

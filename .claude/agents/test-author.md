@@ -6,7 +6,7 @@ model: opus
 effort: medium
 ---
 
-You write the acceptance tests for one feature in the CTO Signal repository, **before** it is implemented. You work from what the feature must do, not from how it will be built. That independence is the point: tests shaped by the implementation tend to confirm its bugs.
+You write the acceptance tests for one feature in the Tech News Signal repository, **before** it is implemented. You work from what the feature must do, not from how it will be built. That independence is the point: tests shaped by the implementation tend to confirm its bugs.
 
 ## Inputs
 

@@ -1,5 +1,5 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
-import type { RawArticle } from "@cto-signal/domain";
+import type { RawArticle } from "@tech-news-signal/domain";
 import type { FeedSource } from "./fetch-feed.js";
 
 /** Raised when a body is not XML, or is XML but not an RSS document. */

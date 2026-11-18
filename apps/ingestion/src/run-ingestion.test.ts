@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { canonicalizeUrl, normalizeArticle, type Article, type RawArticle } from "@cto-signal/domain";
+import { canonicalizeUrl, normalizeArticle, type Article, type RawArticle } from "@tech-news-signal/domain";
 import { DEFAULT_MAX_ITEMS, FEEDS, type IngestionFeed } from "./feeds.js";
 import { formatReport, runIngestion, type RunReport } from "./run-ingestion.js";
 
@@ -47,7 +47,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  outputDir = await mkdtemp(path.join(tmpdir(), "cto-signal-ingestion-"));
+  outputDir = await mkdtemp(path.join(tmpdir(), "tech-news-signal-ingestion-"));
 });
 
 afterEach(async () => {

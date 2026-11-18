@@ -1,8 +1,8 @@
-# CTO Signal: A Complete AI-Assisted Practice Project
+# Tech News Signal: A Complete AI-Assisted Practice Project
 
 ## Project intent
 
-CTO Signal is a deliberately small personal project for recreating, end to end, the way a modern AI-assisted software engineering organization should work.
+Tech News Signal is a deliberately small personal project for recreating, end to end, the way a modern AI-assisted software engineering organization should work.
 
 The product must remain small and focused. Its value is not the number of features it accumulates; its value is the opportunity to refresh and connect the full engineering lifecycle:
 
@@ -17,11 +17,11 @@ The product must remain small and focused. Its value is not the number of featur
 
 The intended outcome is a CTO-sized reference implementation: small enough to complete personally, but realistic enough to expose the organizational choices, guardrails, trade-offs, and failure modes of an AI-assisted SDLC.
 
-## Why CTO Signal instead of generic CRUD or a news aggregator?
+## Why Tech News Signal instead of generic CRUD or a news aggregator?
 
 A generic CRUD application mostly exercises forms, persistence, and API plumbing. A generic news aggregator can become a frontend project with little architectural depth.
 
-CTO Signal creates natural reasons to use event-driven ingestion, queues, idempotency, external adapters, structured LLM outputs, model routing, cost attribution, observability, infrastructure as code, and AI-assisted engineering workflows—without inventing artificial complexity.
+Tech News Signal creates natural reasons to use event-driven ingestion, queues, idempotency, external adapters, structured LLM outputs, model routing, cost attribution, observability, infrastructure as code, and AI-assisted engineering workflows—without inventing artificial complexity.
 
 It is also personally useful. Instead of producing another demo database, it produces a concise view of developments in AI engineering, cloud, security, architecture, banking technology, and the software delivery lifecycle.
 
@@ -29,7 +29,7 @@ The key constraint is important: **build the smallest product that gives the eng
 
 ## Product concept
 
-CTO Signal ingests a small number of engineering, AI, and cloud sources; normalizes and deduplicates their stories; ranks their relevance; summarizes the most important items; and produces a five-minute daily CTO brief.
+Tech News Signal ingests a small number of engineering, AI, and cloud sources; normalizes and deduplicates their stories; ranks their relevance; summarizes the most important items; and produces a five-minute daily CTO brief.
 
 Start with only a few sources, for example:
 
@@ -52,7 +52,7 @@ Each candidate item is evaluated into structured data:
 An example daily output:
 
 ```text
-CTO SIGNAL — AUGUST 29
+TECH NEWS SIGNAL — AUGUST 29
 
 Critical signals
 ────────────────────────────────────────
@@ -135,7 +135,7 @@ Keep the first deployed version serverless. This refreshes IAM, Lambda, API Gate
 The application is the workload. The harness—the conventions and controls that turn intent into tested, reviewed, deployable software—is the actual experiment.
 
 ```text
-cto-signal/
+tech-news-signal/
 │
 ├── CLAUDE.md
 ├── README.md
@@ -225,7 +225,7 @@ claude-personal
 Then edit `CLAUDE.md` yourself and keep it short:
 
 ```markdown
-# CTO Signal
+# Tech News Signal
 
 @.claude/rules/architecture.md
 @.claude/rules/testing.md
@@ -629,8 +629,8 @@ cfn-lint infrastructure/cloudformation/*.yaml
 aws cloudformation package --template-file ingestion.yaml \
   --s3-bucket <artifact-bucket> --output-template-file packaged.yaml
 aws cloudformation deploy --template-file packaged.yaml \
-  --stack-name cto-signal-ingestion --no-execute-changeset
-aws cloudformation execute-change-set --stack-name cto-signal-ingestion \
+  --stack-name tech-news-signal-ingestion --no-execute-changeset
+aws cloudformation execute-change-set --stack-name tech-news-signal-ingestion \
   --change-set-name <name>
 ```
 
@@ -759,7 +759,7 @@ DEVELOPER PLANE
 You → Claude Code → supported Claude authentication
 
 APPLICATION PLANE
-CTO Signal → LiteLLM → provider APIs → metered API billing
+Tech News Signal → LiteLLM → provider APIs → metered API billing
 ```
 
 A Claude or ChatGPT subscription should not be assumed to include application API usage.
@@ -781,7 +781,7 @@ complex reasoning        strongest approved
 ```json
 {
   "task": "article-ranking",
-  "cost_center": "cto-signal",
+  "cost_center": "tech-news-signal",
   "environment": "prod"
 }
 ```
@@ -870,7 +870,7 @@ Each line is a scope hint for `/write-spec`, not the spec itself. Re-check it ag
 | 008 | AI assessment: `packages/llm` with one provider returns a structured assessment (relevance, categories, why it matters, summary, action), validated at the boundary and stored with the article. | 5 | |
 | 009 | LLM gateway: route `packages/llm` through LiteLLM with task-based model routing (cheap for ranking, stronger for synthesis); the hosting choice is part of the spec. | 6, 13 | |
 | 010 | LLM usage tracking: record request id, task, model, tokens, latency, cost, and outcome per call, and show a monthly usage view. | 7 | |
-| 011 | Daily brief: rank assessed articles into the five-minute "CTO Signal" brief with critical signals first and category filters. | — | |
+| 011 | Daily brief: rank assessed articles into the five-minute "Tech News Signal" brief with critical signals first and category filters. | — | |
 | 012 | Evals: a versioned evaluation set run when prompts, models, or routing change, reporting schema validity, ranking quality, latency, and cost. | 13 | |
 
 Harness improvements (hooks, the architect reviewer, workflow tweaks) are not specs. They are tracked as GitHub issues prefixed `harness:` / `repo:` and picked up when a spec triggers them; for example, the architect reviewer arrives with spec 003.
@@ -953,4 +953,4 @@ Issue → Spec → Branch → Claude Code → local hooks → GitHub PR
 
 The goal is not to prove that an LLM can generate Node.js code. The goal is to experience, in one manageable project, how specifications, repository context, reusable skills, specialist agents, deterministic hooks, CI, pull-request review, infrastructure as code, cloud identity, LLM gateways, observability, routing policy, and evaluations work together.
 
-If CTO Signal remains a modest five-minute briefing application while its delivery system becomes a clear, governed, measurable miniature of a modern engineering organization, the project has succeeded.
+If Tech News Signal remains a modest five-minute briefing application while its delivery system becomes a clear, governed, measurable miniature of a modern engineering organization, the project has succeeded.

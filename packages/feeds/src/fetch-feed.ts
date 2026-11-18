@@ -1,4 +1,4 @@
-import type { RawArticle } from "@cto-signal/domain";
+import type { RawArticle } from "@tech-news-signal/domain";
 import { parseRssItems, RssParseError } from "./parse-rss.js";
 
 export type FeedSource = {

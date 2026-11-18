@@ -1,5 +1,5 @@
 {
-  "name": "@cto-signal/feeds",
+  "name": "@tech-news-signal/feeds",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@cto-signal/domain": "*",
+    "@tech-news-signal/domain": "*",
     "fast-xml-parser": "^4.5.7"
   }
 }

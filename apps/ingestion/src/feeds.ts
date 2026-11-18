@@ -1,4 +1,4 @@
-import type { FeedSource } from "@cto-signal/feeds";
+import type { FeedSource } from "@tech-news-signal/feeds";
 
 /** Per-feed item cap. Bounds downstream work (storage, later LLM calls), not the download. */
 export const DEFAULT_MAX_ITEMS = 50;
