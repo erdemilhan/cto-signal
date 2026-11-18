@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@cto-signal/domain": "*",
-    "@cto-signal/feeds": "*"
+    "@tech-news-signal/domain": "*",
+    "@tech-news-signal/feeds": "*"
   }
 }

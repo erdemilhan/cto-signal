@@ -1,9 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { normalizeArticles } from "@cto-signal/domain";
-import type { Article, RejectionReason } from "@cto-signal/domain";
-import { fetchFeed } from "@cto-signal/feeds";
-import type { FeedFailure } from "@cto-signal/feeds";
+import { normalizeArticles } from "@tech-news-signal/domain";
+import type { Article, RejectionReason } from "@tech-news-signal/domain";
+import { fetchFeed } from "@tech-news-signal/feeds";
+import type { FeedFailure } from "@tech-news-signal/feeds";
 import { FEEDS } from "./feeds.js";
 import type { IngestionFeed } from "./feeds.js";
 

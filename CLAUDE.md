@@ -1,4 +1,4 @@
-# CTO Signal
+# Tech News Signal
 
 @.claude/rules/architecture.md
 @.claude/rules/testing.md

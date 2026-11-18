@@ -1,4 +1,4 @@
-# CTO Signal
+# Tech News Signal
 
 A small app that turns a few engineering, AI, and cloud feeds into a five-minute daily brief. It exists mainly to exercise the engineering system around it: an AI-assisted SDLC with specs, plans, agent skills, review agents, CI, and AWS infrastructure as code.
 

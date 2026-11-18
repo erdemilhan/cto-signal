@@ -9,8 +9,8 @@ Spec: docs/specs/002-rss-ingestion.md
 
 Two new workspaces, following `.claude/rules/architecture.md`:
 
-- **`packages/feeds`** (`@cto-signal/feeds`): the RSS adapter, a shared library. `parseRssItems` turns an RSS document into `RawArticle[]`. `fetchFeed` fetches one feed with the timeout and retry policy, then parses it. It never throws; every outcome comes back as a result value. It knows nothing about normalization or files.
-- **`apps/ingestion`**: the runnable unit. It holds the fixed feed list with each feed's item limit, plus `runIngestion`, which fetches all feeds, normalizes each feed's items with `normalizeArticles` from `@cto-signal/domain` (unchanged), writes the JSON file and returns a report. A thin `main.ts` wires real `fetch` and the output folder, then prints the report. It's started with `npm run ingest`.
+- **`packages/feeds`** (`@tech-news-signal/feeds`): the RSS adapter, a shared library. `parseRssItems` turns an RSS document into `RawArticle[]`. `fetchFeed` fetches one feed with the timeout and retry policy, then parses it. It never throws; every outcome comes back as a result value. It knows nothing about normalization or files.
+- **`apps/ingestion`**: the runnable unit. It holds the fixed feed list with each feed's item limit, plus `runIngestion`, which fetches all feeds, normalizes each feed's items with `normalizeArticles` from `@tech-news-signal/domain` (unchanged), writes the JSON file and returns a report. A thin `main.ts` wires real `fetch` and the output folder, then prints the report. It's started with `npm run ingest`.
 
 `packages/domain` is untouched and stays free of I/O.
 
@@ -57,10 +57,10 @@ Both parse correctly with the options above (checked against the live captures).
 
 ## Public interface
 
-`@cto-signal/feeds`, imported from `packages/feeds/src/index.ts`:
+`@tech-news-signal/feeds`, imported from `packages/feeds/src/index.ts`:
 
 ```ts
-import type { RawArticle } from "@cto-signal/domain";
+import type { RawArticle } from "@tech-news-signal/domain";
 
 export type FeedSource = {
   id: string;                  // becomes RawArticle.sourceId
@@ -99,8 +99,8 @@ export function fetchFeed(
 `apps/ingestion`, imported from `apps/ingestion/src/run-ingestion.ts` and `apps/ingestion/src/feeds.ts`:
 
 ```ts
-import type { FeedSource, FeedFailure } from "@cto-signal/feeds";
-import type { RejectionReason } from "@cto-signal/domain";
+import type { FeedSource, FeedFailure } from "@tech-news-signal/feeds";
+import type { RejectionReason } from "@tech-news-signal/domain";
 
 export const DEFAULT_MAX_ITEMS: 50;
 
@@ -144,14 +144,14 @@ Test seams: the injected `fetch` (a stub that routes by URL); fake timers for th
 
 | File | Change |
 |---|---|
-| `packages/feeds/package.json` | New workspace `@cto-signal/feeds`: `type: module`, `exports: ./src/index.ts`, `typecheck` script. Dependencies: `@cto-signal/domain: "*"`, `fast-xml-parser: "^4.5.7"`. |
+| `packages/feeds/package.json` | New workspace `@tech-news-signal/feeds`: `type: module`, `exports: ./src/index.ts`, `typecheck` script. Dependencies: `@tech-news-signal/domain: "*"`, `fast-xml-parser: "^4.5.7"`. |
 | `packages/feeds/tsconfig.json` | Extends the base config, `noEmit`, `types: ["node"]`, includes `src/**/*.ts`. No `rootDir`, because it imports another workspace's sources. |
 | `packages/feeds/src/index.ts` | Re-exports the public interface above. |
 | `packages/feeds/src/parse-rss.ts` | `parseRssItems`, `RssParseError`. |
 | `packages/feeds/src/fetch-feed.ts` | `fetchFeed`, the constants, `FeedSource`, `FeedFailure`, `FetchFeedResult`. |
 | `packages/feeds/src/parse-rss.test.ts` | Parsing edge cases with small inline XML. |
 | `packages/feeds/src/fetch-feed.test.ts` | Timeout, retry and failure classification, with a stub `fetch` and fake timers. |
-| `apps/ingestion/package.json` | New workspace `ingestion`: `start: tsx src/main.ts`, `typecheck`. Dependencies: `@cto-signal/domain`, `@cto-signal/feeds` (`"*"`). |
+| `apps/ingestion/package.json` | New workspace `ingestion`: `start: tsx src/main.ts`, `typecheck`. Dependencies: `@tech-news-signal/domain`, `@tech-news-signal/feeds` (`"*"`). |
 | `apps/ingestion/tsconfig.json` | Same shape as `packages/feeds`. |
 | `apps/ingestion/src/feeds.ts` | `IngestionFeed`, `DEFAULT_MAX_ITEMS`, `FEEDS`. |
 | `apps/ingestion/src/run-ingestion.ts` | `runIngestion`, `formatReport`, `FeedReport`, `RunReport`. |
@@ -202,7 +202,7 @@ Scenario tests are named with the scenario name verbatim; outlines use `it.each`
 
 - **Entity expansion limit.** fast-xml-parser 4.5.7 caps entity expansions at 1,000 per document by default, and the real AWS feed has ~2,800, so the default throws "Entity expansion limit exceeded" (reproduced 2026-11-17). Plan: `processEntities: { maxTotalExpansions: 50_000 }`. That's ~17× today's AWS feed and still a bound against entity-bomb input. If AWS's feed grows past it, the feed fails as `invalid-xml` and the report says so.
 - **Fake timers and async retries.** Tests must use `vi.advanceTimersByTimeAsync` so promise callbacks run between timer steps. This is a known Vitest pattern, and the plan doesn't depend on real time anywhere.
-- **Running TS sources across workspaces.** `tsx` must resolve `@cto-signal/domain` and `@cto-signal/feeds` through their `exports: ./src/index.ts`. This is the first time a workspace consumes another; verify `npm run ingest` once during implementation. If it fails, fix it in config, not by adding a build step.
+- **Running TS sources across workspaces.** `tsx` must resolve `@tech-news-signal/domain` and `@tech-news-signal/feeds` through their `exports: ./src/index.ts`. This is the first time a workspace consumes another; verify `npm run ingest` once during implementation. If it fails, fix it in config, not by adding a build step.
 - **Gitignore check in a test.** The file-per-run scenario shells out to `git check-ignore`, which needs a git checkout. CI has one. If that proves brittle, fall back to a manual check and record it as a deviation.
 - **Feed etiquette.** No `User-Agent` override and no conditional GET. A local manual run every so often is well within normal use.
 

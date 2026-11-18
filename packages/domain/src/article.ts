@@ -9,7 +9,7 @@ export type RawArticle = {
   summary?: string;
 };
 
-/** The canonical article shape used across CTO Signal. */
+/** The canonical article shape used across Tech News Signal. */
 export type Article = {
   /** SHA-256 hex of `url`. Stable across tracking parameters and fragments. */
   id: string;

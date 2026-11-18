@@ -1,1 +1,1 @@
-console.log("CTO Signal — hello world");
+console.log("Tech News Signal — hello world");

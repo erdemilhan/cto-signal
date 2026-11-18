@@ -90,7 +90,7 @@ The fixtures are modelled on these real items *as an adapter would map them*. Ra
 
 | File | Change |
 |---|---|
-| `packages/domain/package.json` | New workspace `@cto-signal/domain`: `type: module`, `exports: ./src/index.ts`, `typecheck: tsc --noEmit` script. No dependencies. |
+| `packages/domain/package.json` | New workspace `@tech-news-signal/domain`: `type: module`, `exports: ./src/index.ts`, `typecheck: tsc --noEmit` script. No dependencies. |
 | `packages/domain/tsconfig.json` | Extends `../../tsconfig.base.json`, `types: ["node"]` (same as `apps/web`), includes `src/**/*.ts`. |
 | `packages/domain/src/index.ts` | Re-exports `article.ts` types and `normalization/index.ts`. |
 | `packages/domain/src/article.ts` | `RawArticle`, `Article` types only. |
